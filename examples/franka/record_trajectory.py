@@ -3,7 +3,6 @@ from robopy.robots.franka import Franka, FrankaHome
 from robopy.observers import RobotObserver
 from robopy.recording import Recorder
 from robopy.trajectory import GoToTrajectory
-import time
 
 if __name__ == "__main__":
 
