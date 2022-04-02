@@ -29,6 +29,8 @@ from franka_interface import ArmInterface, RobotEnable, GripperInterface
 
 import franka_dataflow
 
+from robopy.robots.robot import Robot
+
 @enum.unique
 class FrankaMode(enum.IntEnum):
     """
@@ -118,12 +120,15 @@ class Arms(RosListener):
             self.order = data.name
 
 
-class Franka:
+class Franka(Robot):
 
     def __init__(self, local=True):
         """
         Instantiates an interface for Franka.
         """
+
+        Robot.__init__(self, "Franka")
+
         # if not local
         self._enabled = True
         self._root = "/franka_ros_interface"
@@ -150,19 +155,20 @@ class Franka:
         while not(self.arms.ready):
             pass
 
-        self.groups = {}
         self._building_groups()
 
         # TODO: temporary
         self._joint_names = self.groups["arm_gripper"].refs
+        self.set_limit("panda_joint6", -0.017500, 3.752500)
 
     def joint_names(self):
         return self._joint_names
 
     def _building_groups(self):
-        self.groups["arm"] = Group("arm", ["panda_joint%d" % i for i in range(1, 8)])
-        self.groups["gripper"] = Group("arm", ["panda_finger_joint%d" % i for i in [1, 2]])
-        self.groups["arm_gripper"] = group_union("arm_gripper", self.groups["arm"], self.groups["gripper"])
+        arm = Group("arm", ["panda_joint%d" % i for i in range(1, 8)])
+        gripper = Group("gripper", ["panda_finger_joint%d" % i for i in [1, 2]])
+        arm_gripper = group_union("arm_gripper", arm, gripper)
+        self.set_groups(arm, gripper, arm_gripper)
 
     def _get_cubic_spline(self, trajectory, group_name, frequency=20):
         x = []
@@ -179,7 +185,6 @@ class Franka:
             x.append(x_tot)
         x = np.array(x)
         y = np.array(y)
-        print(x, y)
         spline = CubicSpline(x, y)
 
         points = int(frequency * x_tot)
@@ -223,23 +228,40 @@ class Franka:
         )
         traj_client.clear()
 
-        if len(trajectory.duration) > 1:
-            self._get_cubic_spline(trajectory, group_name)
+        # if len(trajectory.duration) > 1:
+        #     self._get_cubic_spline(trajectory, group_name)
+        #
+        #     for i, (position, velocity, d) \
+        #             in enumerate(zip(*self._get_cubic_spline(trajectory, group_name, frequency=frequency))):
+        #
+        #         traj_client.add_point(
+        #             positions=position.tolist(), time=float(d),
+        #             velocities=velocity.tolist())
+        # else:
+        d_tot = 0.
+        positions = []
+        durations = []
+        velocities = []
+        timings = []
+        for goal, d in trajectory:
+            pos = np.array([float(np.clip(goal[k], self._limits[k][0], self._limits[k][1]))
+                            for k in self.groups[group_name].refs])
+            positions.append(pos)
+            durations.append(d)
 
-            for i, (position, velocity, d) \
-                    in enumerate(zip(*self._get_cubic_spline(trajectory, group_name, frequency=frequency))):
+        for p1, p2, d in zip(positions[:-1], positions[1:], durations[:-1]):
+            velocities.append((p2 - p1)/d)
+            timings.append(d_tot + d)
+            d_tot += d
 
-                traj_client.add_point(
-                    positions=position.tolist(), time=float(d),
-                    velocities=velocity.tolist())
-        else:
-            for goal, d in trajectory:
-                position = [float(goal[k]) for k in self.groups[group_name].refs]
-                velocity = [0.]*len(position)
-                traj_client.add_point(
-                    positions=position, time=float(d),
-                    velocities=velocity)
+        d_tot += durations[-1]
+        velocities.append(np.zeros(len(self.groups[group_name].refs)))
+        timings.append(d_tot)
 
+        for p, v, t in zip(positions, velocities, timings):
+            traj_client.add_point(
+                positions=p.tolist(), time=float(t),
+                velocities=v.tolist())
         traj_client.start()  # send the trajectory action request
         # traj_client.wait(timeout = timeout)
 

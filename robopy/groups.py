@@ -12,4 +12,9 @@ class Group:
 
 
 def group_union(group_name: str, group_1: Group, group_2: Group):
-    return Group(group_name, group_1.refs + group_2.refs)
+    refs = []
+    for ref in group_2.refs + group_1.refs:
+        if ref not in refs:
+            refs.append(ref)
+
+    return Group(group_name, refs)

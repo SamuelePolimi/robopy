@@ -62,14 +62,14 @@ class Recorder:
         """
         duration = 0.
 
-        while not callback_start(self.observer(self.refs)) and duration < max_duration:
+        while not callback_start(self.refs, self.observer(*self.refs), self.dt) and duration < max_duration:
             time.sleep(self.dt)
             duration += self.dt
 
-        goal = self.observer(self.refs)
-        while not callback_end(goal) and duration < max_duration:
-            self.trajectory.notify(duration=self.dt, **goal)
-            goal = self.observer(self.refs)
+        observation = self.observer(*self.refs)
+        while not callback_end(self.refs, observation, self.dt) and duration < max_duration:
+            self.trajectory.notify(duration=self.dt, **observation)
+            observation = self.observer(*self.refs)
             time.sleep(self.dt)
             duration += self.dt
 
@@ -117,7 +117,7 @@ class WaitingToStart(RecordingCallback):
         self.current_position = None
         self.verbose = verbose
 
-    def __call__(self, goal):
+    def __call__(self, refs, observation, duration):
         """
         If the velocity exceed a certain treshold, than the record start.
 
@@ -126,11 +126,13 @@ class WaitingToStart(RecordingCallback):
         :return: Start the recording if true
         :rtype: bool
         """
+
+        position = np.array([observation[ref] for ref in refs])
         if self.current_position is None:
-            self.current_position = goal.position
+            self.current_position = position
             return False
-        elif np.abs(self.current_position - goal.position).mean()/goal.duration < self.threshold:
-            self.current_position = goal.position
+        elif np.abs(self.current_position - position).mean()/duration < self.threshold:
+            self.current_position = position
             return False
         if self.verbose:
             print("Recording started %s" % str(time.time()))
@@ -156,7 +158,7 @@ class WaitingToEnd(RecordingCallback):
         self.duration = 0.
         self.verbose = verbose
 
-    def __call__(self, goal):
+    def __call__(self, refs, observation, duration):
         """
         Deactivates the recording when the velocities are below a certain threshold.
 
@@ -165,18 +167,20 @@ class WaitingToEnd(RecordingCallback):
         :return:
         :rtype: bool
         """
+
+        position = np.array([observation[ref] for ref in refs])
         if self.current_position is None:
-            self.current_position = goal.position
+            self.current_position = position
             return False
-        elif np.abs(self.current_position - goal.position).mean()/goal.duration < self.threshold:
-            self.current_position = goal.position
-            self.duration += goal.duration
+        elif np.abs(self.current_position - position).mean()/duration < self.threshold:
+            self.current_position = position
+            self.duration += duration
             if self.duration > self.max_duration:
                 if self.verbose:
                     print("Recording stopped %s" % str(time.time()))
                 return True
         else:
-            self.current_position = goal.position
+            self.current_position = position
             self.duration = 0.
         return False
 

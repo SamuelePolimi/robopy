@@ -192,3 +192,6 @@ Goals
 - [ ] Integration with OpenCV
 - [ ] More common interfaces for Robots, and for Hardware
 - [ ] Generalize more Observers
+- [ ] Remove Movement Primitives and use them only from ROMI
+- [ ] Visualization class (at least for trajectories)
+- [ ] Would be nice an integrazion with Simulators (CoppeliaSim, MuJoCo)

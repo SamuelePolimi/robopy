@@ -55,7 +55,7 @@ class NamedTrajectoryBase:
         :rtype: None
         """
         ret = {
-           'refs': self.refs,
+           'refs': list(self.refs),
             'duration': self.duration,
             'values': self.values
         }
@@ -82,6 +82,18 @@ class NamedTrajectoryBase:
             indx = self.refs.index(ref)
             ret.append(self.values[:, indx])
         return ret
+
+    def get_init_trajectory(self, duration: float):
+        ret = {}
+        for k in self.refs:
+            indx = self.refs.index(k)
+            ret[k] = self.values[0][indx]
+        return GoToTrajectory(duration, **ret)
+
+    def plot(self, axis):
+        for i, k in enumerate(self.refs):
+            axis[i].plot(np.cumsum(self.duration), self.values[:, i])
+            axis[i].set_title(k)
 
 
 class GoToTrajectory(NamedTrajectoryBase):

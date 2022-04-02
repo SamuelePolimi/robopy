@@ -10,17 +10,10 @@ if __name__ == "__main__":
 
     learning_group = "arm"
 
-    ms = ClassicSpace(franka.groups[learning_group], n_features=30)
-
-    # Learn te movement in this space
-    mp1 = LearnTrajectory(ms, trajectory_1)
-    print("Go to the initial point of the movement primitive")
-    tr_init = mp1.get_init_trajectory(10.)
+    tr_init = trajectory_1.get_init_trajectory(10.)
 
     # Go to the correct position
     franka.go_to(tr_init, learning_group)
 
-    print("Play the movement primitive")
-    # Go to with movement primitive
-
-    franka.goto_mp(mp1, frequency=5, group_name=learning_group)
+    print("Replay the trajectory")
+    franka.go_to(trajectory_1, frequency=5, group_name=learning_group)
