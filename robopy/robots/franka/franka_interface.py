@@ -138,6 +138,8 @@ class Franka(Robot):
         rospy.init_node("robopy_interface")
         self.arms = Arms(self)
         self._arm_interface = ArmInterface(True)
+        force = 0.1
+        self._arm_interface.set_collision_threshold(cartesian_forces=[force, force, force, force, force, force])
         self._gripper_interface = GripperInterface()
         self._robot_status = RobotEnable()
         self._ctrl_manager = FrankaControllerManagerInterface(
@@ -159,7 +161,8 @@ class Franka(Robot):
 
         # TODO: temporary
         self._joint_names = self.groups["arm_gripper"].refs
-        self.set_limit("panda_joint6", -0.017500, 3.752500)
+        # self.set_limit("panda_joint6", -0.017500, 3.752500)
+        self.set_limit("panda_joint6", -0.017500, 3.5)
 
     def joint_names(self):
         return self._joint_names
@@ -219,7 +222,7 @@ class Franka(Robot):
         :param use_moveit: if set to True, and movegroup interface is available,
          move to the joint positions using moveit planner.
         """
-
+        self._robot_status = RobotEnable()
         curr_controller = self._ctrl_manager.set_motion_controller(
             self._ctrl_manager.joint_trajectory_controller)
 
@@ -258,10 +261,16 @@ class Franka(Robot):
         velocities.append(np.zeros(len(self.groups[group_name].refs)))
         timings.append(d_tot)
 
-        for p, v, t in zip(positions, velocities, timings):
-            traj_client.add_point(
-                positions=p.tolist(), time=float(t),
-                velocities=v.tolist())
+        if len(positions) > 1:
+            for p, v, t in zip(positions[:-1], velocities[:-1], timings[:-1]):
+                traj_client.add_point(
+                    positions=p.tolist(), time=float(t),
+                    velocities=v.tolist())
+        else:
+            for p, v, t in zip(positions, velocities, timings):
+                traj_client.add_point(
+                    positions=p.tolist(), time=float(t),
+                    velocities=v.tolist())
         traj_client.start()  # send the trajectory action request
         # traj_client.wait(timeout = timeout)
 
@@ -309,7 +318,7 @@ class Franka(Robot):
         for goal, d in vel_traj:
             velocities.append([goal[k]/duration for k in self.groups[group_name].refs])
 
-        for t, position, velocity in zip(timing, positions, velocities):
+        for t, position, velocity in zip(timing[:-1], positions[:-1], velocities[:-1]):
 
             traj_client.add_point(
                     positions=position, time=t,

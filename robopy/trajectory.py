@@ -145,3 +145,25 @@ class NamedTrajectory(NamedTrajectoryBase):
         concat = app_values.reshape(1, -1)
         self.values = np.concatenate([self.values, concat], axis=0)
         self.duration = np.concatenate([self.duration, np.array([duration])], axis=0)
+
+
+class ExponentialSmoothing:
+
+    def __init__(self, exp_time=0.1):
+        self._exp_time = exp_time
+        self._tau = 1/self._exp_time
+        self._decay_time = 5 * self._exp_time
+
+    def _weighting(self, times):
+        return np.exp(times * self._tau)/ np.sum(np.exp(times * self._tau))
+
+    def smooth(self, trajectory: NamedTrajectoryBase):
+        durations = trajectory.duration
+        times = np.cumsum(durations)
+        values = trajectory.values
+        new_values = [values[0]]
+        for i in range(1, len(durations)):
+            weighting = self._weighting(times[:i] - times[i])
+            new_values.append(values[:i].T @ weighting)
+        return NamedTrajectoryBase(trajectory.refs, durations, np.array(new_values))
+
