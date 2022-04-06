@@ -1,6 +1,5 @@
 from robopy.robots.franka import Franka
 from robopy.trajectory import LoadTrajectory
-from robopy.movement_primitives import LearnTrajectory, ClassicSpace
 
 if __name__ == "__main__":
 
