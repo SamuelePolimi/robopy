@@ -33,7 +33,7 @@ class Interaction:
         if type(self._medium) is Console:
             return self.read("Press ENTER when ready: ")
         else:
-            return self.read("When are you done, say: done.")
+            return self.read("When are you ready, say: ready.")
 
     def signal(self, text: str):
         return self._medium.signal(text)

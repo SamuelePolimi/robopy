@@ -36,7 +36,7 @@ class Audio(Medium):
         self._mic_index = mic_index
         self._console_transcript = console_transcript
         self._temporary = temporary_folder + "temp.mp3"
-        self._recognizer = r.Recognizer()
+        self._recognizer = sr.Recognizer()
 
     def signal(self, text: str):
         myobj = gTTS(text=text, lang=self._language, slow=False)
