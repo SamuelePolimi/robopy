@@ -9,7 +9,10 @@ The robotic interfaces are contained in `robopy.robots`. Currently there is an i
 Both the implementations of the interfaces are "context dependent", meaning that they rely on how the particular substrate of software (ROS modules, controllers, network configuration).
 However, if one inspects the actual implementations provided for `franka` and `darias`, can see that they are simple, and therefore, one can easily customize this library for new robots (I plan myself to add a few more).
 
-The library offers also a few interfaces wfor some hardware, in particular: a OptiTrack motion capture system (`hardware.optitrack`) and a Dymo Scale (`hardware.scale`).
+The library offers a few interfaces for some hardware, in particular: a OptiTrack motion capture system (`hardware.optitrack`) and a Dymo Scale (`hardware.scale`).
+
+Additionaly, the library offers a nice way to interact with the robot via audio `from robopy.interaction import Audio, Interaction`, so that the user can interact with the robot via simple voice commands.
+
 
 General Concepts
 -
@@ -185,13 +188,14 @@ Goals
 - [x] Integrate Dynamo Scale
 - [x] Move to Python 3
 - [x] General interface with other robots
+- [x] Voice commands
 - [ ] Better guide, finer documentation
 - [ ] Exposition of shell commands
 - [ ] Gui interface for status and commands
 - [ ] Integration with cameras
 - [ ] Integration with OpenCV
-- [ ] More common interfaces for Robots, and for Hardware
-- [ ] Generalize more Observers
+- [x] More common interfaces for Robots, and for Hardware
+- [ ] Further generalize Observers
 - [ ] Remove Movement Primitives and use them only from ROMI
 - [ ] Visualization class (at least for trajectories)
 - [ ] Would be nice an integrazion with Simulators (CoppeliaSim, MuJoCo)
