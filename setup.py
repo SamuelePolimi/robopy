@@ -14,5 +14,10 @@ setup(name='robopy',
           'rospkg>=1.1.10',
           # 'enum>=0.4.7',
           'scipy>=1.2.2',
-          'pyusb'
+          'pyusb',
+          'gTTS',
+          'playsound',
+          'PyObjC',
+          'SpeechRecognition',
+          'pydub'
       ])
