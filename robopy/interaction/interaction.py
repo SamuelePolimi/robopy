@@ -34,7 +34,7 @@ class Interaction:
             return self.read("Press ENTER when ready: ")
         else:
             return self.read("When are you done, say: done.")
-            
+
     def signal(self, text: str):
         return self._medium.signal(text)
 
